@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ultimate – Traversée de terrain</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f6f2;--card:#fff;--tx:#1b2a21;--mut:#6a7a70;--ac:#1f7a4d;--acx:#fff;--st:#c0392b;--bd:#dde3da}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111813;--card:#1c2620;--tx:#e8efe9;--mut:#93a39a;--ac:#3fb37a;--acx:#0b1510;--st:#e5675a;--bd:#2c3833}}
+:root[data-theme="dark"]{--bg:#111813;--card:#1c2620;--tx:#e8efe9;--mut:#93a39a;--ac:#3fb37a;--acx:#0b1510;--st:#e5675a;--bd:#2c3833}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;touch-action:manipulation}
+header{padding:14px 16px 0}
+h1{font-size:20px;margin:0 0 10px}
+nav{display:flex;gap:6px}
+nav button{flex:1;padding:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font:inherit;font-weight:600}
+nav button.on{background:var(--ac);color:var(--acx);border-color:var(--ac)}
+main{padding:14px 16px 40px;max-width:960px;margin:0 auto}
+.card{position:relative;background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px 12px 12px 26px;margin-bottom:12px}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:12px;background:var(--c);border-radius:14px 0 0 14px;box-shadow:inset 0 0 0 1px rgba(128,128,128,.45)}
+.team{display:grid;gap:10px;grid-template-columns:1fr auto;grid-template-areas:"name score" "btns btns"}
+.tn{grid-area:name;font-weight:800;font-size:20px;overflow-wrap:anywhere}
+.sc{grid-area:score;text-align:right;font-variant-numeric:tabular-nums}
+.pts{font-size:15px;color:var(--mut);font-weight:600}
+.nt{font-size:30px;font-weight:800;line-height:1.1;font-variant-numeric:tabular-nums}
+.bt{grid-area:btns;display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.pb{height:64px;border:0;border-radius:12px;background:var(--c);color:var(--t);font:inherit;font-size:22px;font-weight:800;box-shadow:inset 0 0 0 1px rgba(128,128,128,.45)}
+.pb:active{transform:scale(.95)}
+@media (min-width:720px){.team{grid-template-columns:150px 1fr 170px;grid-template-areas:"name btns score";align-items:center}.pb{height:72px;font-size:26px}}
+.x{background:none;border:0;color:var(--mut);font:inherit;font-size:13px;padding:2px 0;display:block}
+.x:disabled{opacity:.35}
+.hint{color:var(--mut);font-size:14px}
+.b{padding:12px 16px;border:0;border-radius:10px;font:inherit;font-weight:700;background:var(--ac);color:var(--acx)}
+.b.sec{background:transparent;color:var(--mut);border:1px solid var(--bd)}
+.b.del{background:var(--st);color:#fff}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}
+.li{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:8px 10px;margin-bottom:8px}
+.dot{width:26px;height:26px;border-radius:50%;background:var(--c);flex:none;box-shadow:inset 0 0 0 1px rgba(128,128,128,.55)}
+input[type=text],input[type=number]{flex:1;min-width:0;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font:inherit}
+input[type=number]{flex:none;width:84px;text-align:center}
+.sw{width:40px;height:40px;border-radius:50%;border:0;background:var(--c);padding:0;box-shadow:inset 0 0 0 1px rgba(128,128,128,.55)}
+.sw.on,.cp.on{outline:3px solid var(--tx);outline-offset:2px}
+.cp{width:40px;height:40px;padding:0;border:0;border-radius:50%;background:none}
+h2{font-size:16px;margin:18px 0 6px}
+.rh{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.ar{display:flex;gap:10px;align-items:center;padding:6px 0;border-top:1px solid var(--bd);font-variant-numeric:tabular-nums}
+.ar .sp{flex:1}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+<h1>🥏 Traversée de terrain</h1>
+<nav><button data-v="jeu" class="on">Jeu</button><button data-v="res">Résultats</button><button data-v="eq">Équipes</button></nav>
+</header>
+<main>
+<section id="jeu"></section>
+<section id="res" hidden></section>
+<section id="eq" hidden></section>
+</main>
+<script>
+const KEY='ultimate-v1';
+let S={n:7,teams:[]};
+try{const r=localStorage.getItem(KEY);if(r)S=JSON.parse(r)}catch(e){}
+S.n=S.n||7;
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const $=s=>document.querySelector(s);
+function h(tag,attrs,...kids){const e=document.createElement(tag);for(const k in attrs||{}){if(k==='on')e.onclick=attrs[k];else e.setAttribute(k,attrs[k])}kids.flat().forEach(c=>e.append(c));return e}
+const PTS={1:0.5,10:1,100:2,1000:4};
+const COLORS=[['Rouge','#e53935'],['Orange','#fb8c00'],['Jaune','#fdd835'],['Vert','#43a047'],['Vert clair','#9ccc65'],['Turquoise','#00acc1'],['Bleu ciel','#4fc3f7'],['Bleu','#1e88e5'],['Bleu marine','#1a237e'],['Violet','#8e24aa'],['Rose','#ec407a'],['Bordeaux','#880e4f'],['Marron','#6d4c41'],['Gris','#9e9e9e'],['Noir','#212121'],['Blanc','#ffffff']];
+const total=t=>t.log.reduce((a,b)=>a+b,0);
+const raw=t=>t.log.reduce((a,b)=>a+PTS[b],0);
+const scaled=t=>t.real>0?raw(t)*S.n/t.real:raw(t);
+const grade=t=>Math.min(20,scaled(t));
+const fr=n=>String(Math.round(n*10)/10).replace('.',',');
+const pl=(n,w)=>n+' '+w+(n>1?'s':'');
+function txt(hex){const n=parseInt(hex.slice(1),16);return(0.299*(n>>16)+0.587*(n>>8&255)+0.114*(n&255))>160?'#111':'#fff'}
+const cs=c=>'--c:'+c+';--t:'+txt(c);
+const adj=t=>t.real>0&&t.real!==S.n?'ramenée sur '+S.n+' (×'+S.n+'/'+t.real+')':'';
+let view='jeu',pick=COLORS[0];
+
+function arm(btn,label,fn){let a=false;btn.onclick=()=>{if(!a){a=true;btn.textContent='Sûr ?';setTimeout(()=>{a=false;btn.textContent=label},3000);return}fn()}}
+
+function renderJeu(){
+  const el=$('#jeu');el.replaceChildren();
+  if(!S.teams.length){el.append(h('p',{class:'hint'},'Ajoute d\u2019abord des équipes dans l\u2019onglet « Équipes ».'));return}
+  S.teams.forEach(t=>{
+    const undo=h('button',{class:'x',on:()=>{t.log.pop();save();renderJeu()}},'↶ Annuler le dernier');
+    if(!t.log.length)undo.disabled=true;
+    const btns=h('div',{class:'bt'},[1,10,100,1000].map(v=>h('button',{class:'pb',on:()=>{t.log.push(v);save();renderJeu()}},'+'+v)));
+    el.append(h('div',{class:'card team',style:cs(t.color)},
+      h('div',{class:'tn'},t.name,undo),btns,
+      h('div',{class:'sc'},
+        h('div',{class:'pts'},total(t).toLocaleString('fr-FR')+' pts · '+pl(t.log.length,'tentative')),
+        h('div',{class:'nt'},fr(grade(t))+' / 20'),
+        h('div',{class:'pts'},adj(t)))));
+  });
+  el.append(h('p',{class:'hint'},'Barème : 1 pt = 0,5 · 10 pts = 1 · 100 pts = 2 · 1000 pts = 4 (note plafonnée à 20).'));
+}
+
+function renderRes(){
+  const el=$('#res');el.replaceChildren();
+  if(!S.teams.length){el.append(h('p',{class:'hint'},'Aucune équipe.'));return}
+  S.teams.forEach(t=>{
+    const inp=h('input',{type:'number',inputmode:'numeric',min:'1',placeholder:String(t.log.length||S.n)});
+    if(t.real>0)inp.value=t.real;
+    inp.onchange=()=>{const v=parseInt(inp.value,10);t.real=v>0?v:null;save();renderRes()};
+    const c=h('div',{class:'card',style:cs(t.color)},
+      h('div',{class:'rh'},h('div',{class:'tn'},t.name),h('div',{class:'nt'},fr(grade(t))+' / 20')),
+      h('div',{class:'hint'},total(t).toLocaleString('fr-FR')+' pts · '+pl(t.log.length,'tentative')+' enregistrée'+(t.log.length>1?'s':'')+(adj(t)?' · '+adj(t):'')),
+      h('div',{class:'row'},h('label',{class:'hint'},'Tentatives réellement effectuées (sur '+S.n+') :'),inp));
+    if(!t.log.length)c.append(h('div',{class:'hint'},'Aucune tentative.'));
+    t.log.forEach((v,i)=>{
+      const del=h('button',{class:'b sec'},'✕');
+      arm(del,'✕',()=>{t.log.splice(i,1);save();renderRes()});
+      c.append(h('div',{class:'ar'},h('span',{class:'hint'},'n°'+(i+1)),h('b',{},'+'+v),h('span',{class:'hint'},'= '+fr(PTS[v])+' / 20'),h('span',{class:'sp'}),del));
+    });
+    el.append(c);
+  });
+  el.append(h('p',{class:'hint'},'Si tu indiques un nombre de tentatives inférieur à '+S.n+', la note est multipliée par '+S.n+' ÷ ce nombre (produit en croix), plafonnée à 20. Laisse vide pour ne rien recalculer.'));
+}
+
+function renderEq(){
+  const el=$('#eq');el.replaceChildren();
+  const nn=h('input',{type:'number',inputmode:'numeric',min:'1',value:String(S.n)});
+  nn.onchange=()=>{const v=parseInt(nn.value,10);S.n=v>0?v:7;nn.value=S.n;save()};
+  el.append(h('h2',{},'Nombre de tentatives prévues'),h('div',{class:'row'},nn,h('span',{class:'hint'},'par équipe')));
+  el.append(h('h2',{},'Équipes'));
+  if(!S.teams.length)el.append(h('p',{class:'hint'},'Aucune équipe pour le moment.'));
+  S.teams.forEach(t=>{
+    const inp=h('input',{type:'text',value:t.name});inp.onchange=()=>{t.name=inp.value.trim()||t.name;save()};
+    const del=h('button',{class:'b sec'},'✕');arm(del,'✕',()=>{S.teams=S.teams.filter(x=>x!==t);save();renderEq()});
+    el.append(h('div',{class:'li',style:cs(t.color)},h('div',{class:'dot'}),inp,del));
+  });
+  el.append(h('h2',{},'Ajouter une équipe'));
+  const isCustom=pick[0]===null;
+  const cp=h('input',{type:'color',class:'cp'+(isCustom?' on':''),value:pick[1],title:'Autre couleur'});
+  cp.onchange=()=>{pick=[null,cp.value];renderEq()};
+  const sw=h('div',{class:'row'},COLORS.map(([n,c])=>h('button',{class:'sw'+(!isCustom&&pick[1]===c?' on':''),style:cs(c),'aria-label':n,title:n,on:()=>{pick=[n,c];renderEq()}})),cp,h('span',{class:'hint'},'autre couleur'));
+  const nm=h('input',{type:'text',placeholder:'Nom (facultatif) – sinon le nom de la couleur'});
+  const add=h('button',{class:'b',on:()=>{
+    const name=nm.value.trim()||(pick[0]?'Équipe '+pick[0].toLowerCase():'Équipe '+(S.teams.length+1));
+    S.teams.push({id:'t'+Date.now().toString(36),name,color:pick[1],log:[],real:null});
+    const i=COLORS.findIndex(c=>c[1]===pick[1]);pick=COLORS[(i+1)%COLORS.length];
+    save();renderEq();
+  }},'Ajouter');
+  el.append(sw,h('div',{class:'row'},nm,add));
+  const rz=h('button',{class:'b del'},'Remettre tous les scores à zéro');
+  arm(rz,'Remettre tous les scores à zéro',()=>{S.teams.forEach(t=>{t.log=[];t.real=null});save();rz.textContent='Scores remis à zéro.'});
+  el.append(h('h2',{},'Nouvelle séance'),rz,h('p',{class:'hint'},'Les scores sont enregistrés sur cet appareil.'));
+}
+
+function show(v){
+  view=v;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  ['jeu','res','eq'].forEach(i=>$('#'+i).hidden=i!==v);
+  ({jeu:renderJeu,res:renderRes,eq:renderEq})[v]();
+}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>show(b.dataset.v));
+show(S.teams.length?'jeu':'eq');
+if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){navigator.serviceWorker.register('sw.js').catch(()=>{})}
+</script>
+</body>
+</html>
