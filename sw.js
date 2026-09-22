@@ -1,5 +1,5 @@
 // Service worker : garde l'appli en mémoire pour qu'elle s'ouvre sans internet.
-const CACHE = 'ultimate-traversee-v2';
+const CACHE = 'ultimate-traversee-v5';
 const FILES = ['./', './index.html'];
 
 self.addEventListener('install', e => {
